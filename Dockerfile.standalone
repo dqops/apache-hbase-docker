@@ -1,0 +1,36 @@
+FROM alpine:latest AS build-env
+
+MAINTAINER Tsuyoshi Miyake <me@tsuyo.dev>
+
+ARG HBASE_VERSION="2.1.4"
+ENV HBASE_VERSION ${HBASE_VERSION}
+
+WORKDIR /app
+RUN \
+  apk update && \
+  apk add jq
+
+RUN \
+  CLOSER_URL=`wget -q -O - 'https://www.apache.org/dyn/closer.cgi?as_json=1' | jq --raw-output '.preferred'` && \
+  wget -q -O - ${CLOSER_URL}/hbase/${HBASE_VERSION}/hbase-${HBASE_VERSION}-bin.tar.gz | \
+  tar zxf - && \
+  mv hbase-${HBASE_VERSION}* hbase
+
+
+FROM openjdk:8-jdk-slim
+COPY --from=build-env /app /app
+
+ENV HBASE_HOME /app/hbase
+ENV PATH ${PATH}:${HBASE_HOME}/bin
+ENV START_SCRIPT start-apache-hbase-standalone.sh
+
+RUN \
+  apt-get -qq update && \
+  apt-get install -y procps net-tools
+
+ADD command/${START_SCRIPT} /usr/sbin
+RUN \
+  chmod +x /usr/sbin/${START_SCRIPT}
+
+WORKDIR /workspace
+CMD ["sh", "-c", "/usr/sbin/${START_SCRIPT} && tail -f /dev/null"]

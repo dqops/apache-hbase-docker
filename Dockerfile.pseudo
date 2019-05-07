@@ -1,0 +1,36 @@
+FROM alpine:latest AS build-env
+
+MAINTAINER Tsuyoshi Miyake <me@tsuyo.dev>
+
+# HBase 2.1.4 doesn't work with Hadoop 2.9.2
+ARG HBASE_VERSION="2.0.5"
+ENV HBASE_VERSION ${HBASE_VERSION}
+
+WORKDIR /app
+RUN \
+  apk update && \
+  apk add jq
+
+RUN \
+  CLOSER_URL=`wget -q -O - 'https://www.apache.org/dyn/closer.cgi?as_json=1' | jq --raw-output '.preferred'` && \
+  wget -q -O - ${CLOSER_URL}/hbase/${HBASE_VERSION}/hbase-${HBASE_VERSION}-bin.tar.gz | \
+  tar zxf - && \
+  mv hbase-${HBASE_VERSION}* hbase
+
+
+FROM kirasoa/apache-hadoop-pseudo-yarn:2.9.2
+COPY --chown=hadoop:hadoop --from=build-env /app /app
+
+ENV HBASE_HOME /app/hbase
+ENV PATH ${PATH}:${HBASE_HOME}/bin
+ENV START_SCRIPT start-apache-hbase-pseudo.sh
+
+ADD conf/hbase-site.xml ${HBASE_HOME}/conf
+ADD command/${START_SCRIPT} /usr/sbin
+RUN \
+  chmod +x /usr/sbin/${START_SCRIPT} && \
+  echo "export JAVA_HOME=${JAVA_HOME}" >> ${HBASE_HOME}/conf/hbase-env.sh && \
+  echo "PATH=$PATH" >> /home/hadoop/.bashrc
+
+WORKDIR /workspace
+CMD ["sh", "-c", "/usr/sbin/${START_SCRIPT} && tail -f /dev/null"]
