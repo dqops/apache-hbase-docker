@@ -4,7 +4,7 @@ Apache HBase Dockerfiles for a Single Node Cluster
 
 ## build
 ```
-$ docker build --build-arg HBASE_VERSION="2.1.4" \
+$ docker build --build-arg HBASE_VERSION="2.1.5" \
 -t kirasoa/apache-hbase-standalone:2.1.4 \
 -t kirasoa/apache-hbase-standalone:latest \
 -f Dockerfile.standalone .
