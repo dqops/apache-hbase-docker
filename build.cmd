@@ -1,0 +1,1 @@
+docker build --build-arg HBASE_VERSION="2.5.4" -t dqops/apache-hbase-standalone:2.5.4 -t dqops/apache-hbase-standalone:latest -f Dockerfile.standalone .

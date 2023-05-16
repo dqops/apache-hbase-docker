@@ -12,7 +12,7 @@ RUN \
   apk add jq
 
 RUN \
-  CLOSER_URL=`wget -q -O - 'https://www.apache.org/dyn/closer.cgi?as_json=1' | jq --raw-output '.preferred'` && \
+  CLOSER_URL=`wget -q -O - 'https://www.apache.org/dyn/closer.lua' | jq --raw-output '.preferred'` && \
   wget -q -O - ${CLOSER_URL}/hbase/${HBASE_VERSION}/hbase-${HBASE_VERSION}-bin.tar.gz | \
   tar zxf - && \
   mv hbase-${HBASE_VERSION}* hbase
